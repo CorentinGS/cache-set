@@ -52,7 +52,6 @@ func (s set[T]) ToSlice() []T {
 		slice = append(slice, k)
 	}
 	return slice
-
 }
 
 // Add adds the given element to the set with the given expiration time
