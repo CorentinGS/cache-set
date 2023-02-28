@@ -1,3 +1,30 @@
+// Package cacheset contains a thread-safe map with expiration times.
+//
+// Path: cache.go
+//
+// Description: cache.go contains the Cache type and its methods.
+//
+// Usage:
+//
+//	// Create a new cache that cleans every 5 minutes
+//	cache := New(5 * time.Minute)
+//
+//	// Add an element to the cache with a 1 minute expiration time
+//	cache.Add("foo", 1 * time.Minute)
+//
+//	// Check if an element is in the cache
+//	if cache.Contains("foo") {
+//		// ...
+//	}
+//
+//	// Delete an element from the cache
+//	cache.Delete("foo")
+//
+//	// Get a copy of the cache's set
+//	set := cache.CopySet()
+//
+//	// Close the cache's cleaning goroutine
+//	cache.Close()
 package cacheset
 
 import (
@@ -7,9 +34,9 @@ import (
 
 // Cache is a thread-safe map with expiration times.
 type Cache[T comparable] struct {
-	set[T]
-	sync.RWMutex
-	close chan struct{}
+	set[T]                     // set is a map with expiration times
+	sync.RWMutex               // RWMutex is a mutex that can be locked and unlocked for reading and writing
+	close        chan struct{} // close is a channel that stops the cache's cleaning goroutine
 }
 
 // New creates a new cache that asynchronously cleans
@@ -19,17 +46,17 @@ func New[T comparable](cleanInterval time.Duration) *Cache[T] {
 		close: make(chan struct{}),
 	}
 
-	ticker := time.NewTicker(cleanInterval)
-	defer ticker.Stop()
+	ticker := time.NewTicker(cleanInterval) // ticker is a ticker that cleans the cache every cleanInterval
+	defer ticker.Stop()                     // defer ticker.Stop() stops the ticker when the function returns
 
 	go func() {
 		for {
 			select {
-			case <-c.close:
+			case <-c.close: // c.close is a channel that stops the cache's cleaning goroutine
 				return
-			case <-ticker.C:
+			case <-ticker.C: // ticker.C is a channel that sends a value every time the ticker ticks
 				c.Lock()
-				c.ExpireAll()
+				c.ExpireAll() // ExpireAll expires all elements in the cache
 				c.Unlock()
 			}
 		}
@@ -39,11 +66,14 @@ func New[T comparable](cleanInterval time.Duration) *Cache[T] {
 }
 
 // CopySet returns a copy of the cache's set
+//
+// Description: CopySet returns a copy of the cache's set. The returned set is a map of elements to their expiration times.
+// In go maps are passed by reference, so this function returns a copy of the map.
 func (c *Cache[T]) CopySet() map[T]int64 {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.set
+	return c.set.Copy()
 }
 
 // Delete removes the given element from the cache

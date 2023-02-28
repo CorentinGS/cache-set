@@ -1,3 +1,8 @@
+// Package cacheset
+//
+// Path: set.go
+//
+// Description: set.go contains the set type and its methods.
 package cacheset
 
 import "time"
@@ -10,6 +15,15 @@ func (s set[T]) Expire(elem T) {
 	if s.Expired(elem) {
 		s.Delete(elem)
 	}
+}
+
+// Copy returns a copy of the set
+func (s set[T]) Copy() set[T] {
+	c := newSet[T]()
+	for k, v := range s {
+		c[k] = v
+	}
+	return c
 }
 
 // ExpireAll removes all expired elements from the set
