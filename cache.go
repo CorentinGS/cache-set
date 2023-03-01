@@ -34,9 +34,9 @@ import (
 
 // Cache is a thread-safe map with expiration times.
 type Cache[T comparable] struct {
-	set[T]
-	close chan struct{}
-	sync.RWMutex
+	set[T]                     // set is a map with expiration times
+	close        chan struct{} // close is a channel that stops the cache's cleaning goroutine
+	sync.RWMutex               // RWMutex is a mutex that can be locked for reading or writing
 }
 
 // New creates a new cache that asynchronously cleans
